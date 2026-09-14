@@ -1,318 +1,411 @@
-# Project 7: Semantic Search Engine
+# Semantic Search Engine
 
-A complete **semantic search system** built with Python, FastAPI, and sentence-transformers. Understand how modern AI-powered search works by building it from scratch.
+A complete, educational implementation of a semantic search system. Find documents by **meaning**, not just keywords.
 
-## 🎯 What This Project Does
+## 🎯 Problem
 
-This project implements a **semantic search engine** that finds documents by **meaning**, not just keywords.
-
-### How It Works
-
+Traditional keyword search finds documents with exact word matches:
 ```
-User Query:  "machine learning algorithms"
-                    ↓
-         [Embedding Model]
-                    ↓
-Query Vector: [0.23, -0.15, 0.89, ..., -0.34]
-                    ↓
-      [Compare with all documents]
-                    ↓
-      [Rank by semantic similarity]
-                    ↓
-Results: "Supervised learning..." (99% match)
-         "Decision trees..." (91% match)
-         "Neural networks..." (85% match)
+Query: "How do computers learn?"
+Keyword Search: ❌ No results (exact phrase not found)
+Semantic Search: ✅ Returns "Machine Learning" article
 ```
 
-**Key Difference from Google/Bing:**
-- ❌ Keyword search: Exact word matching only
-- ✅ Semantic search: Finds meaning, even with different words
+Semantic search understands **meaning** using AI embeddings:
+- Finds synonyms ("learning" ≈ "understanding")
+- Handles paraphrases ("systems that learn" ≈ "machine learning")
+- Grasps related concepts (transformers in NLP)
+- Tolerates natural language phrasing
 
-## 🚀 Quick Start
+## ✨ Features
 
-### 1. Clone and Setup
+- **🧠 Semantic Search**: Meaning-based document retrieval using embeddings
+- **📊 Embeddings**: 384-dimensional vectors from Sentence Transformers
+- **📄 Document Chunking**: Split large documents into searchable pieces with overlap
+- **⚡ Vector Search**: Cosine similarity for ranking results
+- **🎯 Ranked Results**: Results sorted by relevance score (0.0-1.0)
+- **🔌 FastAPI Backend**: RESTful API for all search operations
+- **🎨 Next.js Frontend**: Modern, responsive web interface
+- **💾 Local Vector Search**: In-memory search with Python dictionary
+- **☁️ Pinecone Integration**: Optional cloud vector database (not implemented in starter version)
+
+## 🏗️ Architecture
+
+```
+Next.js Frontend (http://localhost:3000)
+        ↓ HTTP POST /search
+        ↓
+FastAPI Backend (http://localhost:8000)
+        ↓
+Sentence Transformer Model
+        ↓ Encodes query to embedding
+        ↓
+[0.23, -0.15, 0.89, ..., -0.34]  ← 384-dimensional vector
+        ↓
+Vector Store (Local or Pinecone)
+        ↓
+Compare query embedding with all document embeddings
+        ↓ Cosine Similarity
+        ↓
+Rank by score (highest first)
+        ↓
+Return top-K results with metadata
+        ↓
+Frontend displays ranked results
+```
+
+## 📚 How Semantic Search Works
+
+### Step 1: Document Preparation
+```
+Raw Document (10,000 words)
+  ↓
+Split into chunks (300 chars, 50 char overlap)
+  ↓
+57 chunks from 3 documents
+```
+
+### Step 2: Embedding Generation
+```
+Each chunk text:
+"Machine learning is a subset of artificial intelligence..."
+  ↓
+SentenceTransformer model encodes
+  ↓
+[0.23, -0.15, 0.89, ..., -0.34]  ← Fixed 384-dimensional vector
+```
+
+### Step 3: Query Encoding
+```
+User query:
+"What is machine learning?"
+  ↓
+Same SentenceTransformer encodes
+  ↓
+[0.24, -0.14, 0.87, ..., -0.33]  ← Similar to ML document!
+```
+
+### Step 4: Similarity Search
+```
+Compare query vector with all 57 document vectors
+  ↓
+Cosine similarity: cos(θ) = (A·B) / (|A| × |B|)
+  ↓
+chunk_001: 0.987 ✓
+chunk_002: 0.234
+chunk_003: 0.912 ✓
+...
+```
+
+### Step 5: Ranking & Display
+```
+Sort by similarity score (highest first)
+  ↓
+Return top-5 results
+  ↓
+Frontend displays with:
+  • Similarity percentage
+  • Document snippet
+  • Source file
+  • Relevance badge
+```
+
+## 🛠️ Tech Stack
+
+**Backend:**
+- Python 3.9+
+- FastAPI (web framework)
+- Uvicorn (ASGI server)
+- sentence-transformers (embeddings)
+- PyTorch (neural networks)
+- NumPy (numerical computing)
+
+**Frontend:**
+- Next.js 14 (React framework)
+- TypeScript (type safety)
+- Tailwind CSS (styling)
+- React Hooks (state management)
+
+**Vector Search:**
+- Local: Python dictionary + cosine similarity
+- Optional: Pinecone (cloud vector database)
+
+**Development:**
+- Git (version control)
+- Python venv (environment management)
+- npm/Node.js (frontend package management)
+
+## 📁 Project Structure
+
+```
+project-7-semantic-search/
+├── README.md                          # This file
+├── SETUP_GUIDE.md                     # Installation instructions
+├── TASK_05_GUIDE.md                   # Document chunking guide
+├── TASK_09_EVALUATION.md              # Search evaluation framework
+│
+├── backend/                           # Python backend
+│   ├── main.py                        # FastAPI application
+│   ├── requirements.txt               # Python dependencies
+│   │
+│   ├── api/                           # HTTP API layer
+│   │   ├── routes.py                  # Endpoints (/search, /health)
+│   │   └── schemas.py                 # Pydantic models
+│   │
+│   ├── services/                      # Business logic
+│   │   └── search_service.py          # Search orchestration
+│   │
+│   ├── ingestion/                     # Document processing
+│   │   ├── loader.py                  # Load .txt files
+│   │   └── chunker.py                 # Split into chunks
+│   │
+│   ├── evaluation/                    # Evaluation framework
+│   │   ├── dataset.py                 # Test queries
+│   │   ├── keyword_search.py          # Keyword search impl.
+│   │   ├── metrics.py                 # Precision, recall, MRR
+│   │   └── compare.py                 # Semantic vs keyword comparison
+│   │
+│   ├── data/
+│   │   └── sample_documents/          # Example documents
+│   │       ├── machine_learning.txt
+│   │       ├── deep_learning.txt
+│   │       └── nlp_guide.txt
+│   │
+│   └── embeddings/                    # Embedding generation
+│       ├── generate_embeddings.py
+│       ├── index_documents.py         # Full pipeline
+│       └── demo_pipeline.py           # Demo without dependencies
+│
+├── frontend/                          # Next.js frontend
+│   ├── app/
+│   │   ├── page.tsx                   # Main search page
+│   │   ├── layout.tsx                 # Root layout
+│   │   └── globals.css                # Global styles
+│   │
+│   ├── components/                    # React components
+│   │   ├── Header.tsx
+│   │   ├── SearchForm.tsx
+│   │   ├── SearchResult.tsx
+│   │   ├── LoadingState.tsx
+│   │   └── EmptyState.tsx
+│   │
+│   ├── lib/                           # Utilities
+│   │   └── api.ts                     # API client
+│   │
+│   ├── types/                         # TypeScript types
+│   │   └── index.ts
+│   │
+│   ├── package.json                   # Node dependencies
+│   ├── tsconfig.json                  # TypeScript config
+│   ├── tailwind.config.ts             # Tailwind config
+│   └── next.config.js                 # Next.js config
+│
+└── docs/                              # Documentation
+    ├── architecture.md                # System design
+    └── learning-notes.md              # Concepts learned
+```
+
+## 🚀 Local Setup
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- ~5GB free disk space (for embedding model)
+
+### Backend Setup
 
 ```bash
-# Clone repository
-git clone https://github.com/mehedihasansabbir220/project-7-semantic-search.git
-cd project-7-semantic-search
+cd backend
 
 # Create virtual environment
 python3 -m venv venv
 
-# Activate virtual environment
-# macOS/Linux:
+# Activate
 source venv/bin/activate
-# Windows:
-venv\Scripts\activate
-```
 
-### 2. Install Dependencies
-
-```bash
-cd backend
+# Install dependencies
 pip install -r requirements.txt
+
+# Start server
+uvicorn main:app --reload --port 8000
 ```
 
-**Installation takes 2-5 minutes** (downloads embedding model ~200MB)
+Backend runs at: **http://localhost:8000**
 
-### 3. Start the API Server
+### Frontend Setup
 
 ```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
 ```
 
-**Output:**
+Frontend runs at: **http://localhost:3000**
+
+### Configuration
+
+Create `frontend/.env.local`:
 ```
-Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-✓ API READY - Listening on http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### 4. Test the API
+## 📡 API Documentation
 
-**Option A: Swagger UI (Interactive)**
-```
-http://localhost:8000/docs
-```
-
-**Option B: cURL**
+### Health Check
 ```bash
-curl -X POST http://localhost:8000/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is machine learning?", "top_k": 5}'
-```
-
-**Option C: Health Check**
-```bash
-curl http://localhost:8000/health
-```
-
-## 📚 API Endpoints
-
-### POST /search - Semantic Search
-
-Find documents by meaning.
-
-```bash
-curl -X POST http://localhost:8000/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "neural networks",
-    "top_k": 5
-  }'
+GET /health
 ```
 
 **Response:**
 ```json
 {
-  "query": "neural networks",
+  "status": "healthy",
+  "model_loaded": true,
+  "chunks_indexed": 57
+}
+```
+
+### Search
+```bash
+POST /search
+Content-Type: application/json
+
+{
+  "query": "machine learning algorithms",
+  "top_k": 5
+}
+```
+
+**Response:**
+```json
+{
+  "query": "machine learning algorithms",
   "top_k": 5,
   "total_results": 3,
   "results": [
     {
-      "chunk_id": "doc_002_chunk_0005",
-      "document_id": "doc_002",
+      "chunk_id": "doc_001_chunk_0000",
+      "document_id": "doc_001",
       "score": 0.987,
-      "text": "Deep learning uses neural networks...",
-      "filename": "deep_learning.txt"
+      "text": "Machine learning is a subset...",
+      "filename": "machine_learning.txt"
     }
   ]
 }
 ```
 
-### GET /health - Health Check
+### Interactive Docs
+- Swagger UI: **http://localhost:8000/docs**
+- ReDoc: **http://localhost:8000/redoc**
 
-```bash
-curl http://localhost:8000/health
-```
+## 📊 Search Evaluation
 
-### GET /search/stats - Statistics
-
-```bash
-curl http://localhost:8000/search/stats
-```
-
-### GET /docs - Interactive Docs
-
-```
-http://localhost:8000/docs
-```
-
-## 📁 Project Structure
-
-```
-backend/
-├── main.py                       # FastAPI application
-├── requirements.txt              # Dependencies
-│
-├── api/                          # HTTP API layer
-│   ├── __init__.py
-│   ├── schemas.py                # Pydantic models
-│   └── routes.py                 # FastAPI endpoints
-│
-├── services/                     # Business logic
-│   ├── __init__.py
-│   └── search_service.py         # Search engine
-│
-├── ingestion/                    # Document processing
-│   ├── loader.py                 # Load .txt files
-│   └── chunker.py                # Split into chunks
-│
-└── data/
-    └── sample_documents/         # Example documents
-```
-
-## 🧠 Key Concepts
-
-### Document
-Text file we want to search (e.g., research paper, blog post)
-- Variable size: 1KB to 1MB+
-- Example: `machine_learning.txt` (3,269 characters)
-
-### Chunk
-A piece of a document (fixed size)
-- Fixed size: 300 characters (default)
-- Why: Embedding models have token limits
-- With overlap: 50 characters shared with adjacent chunks
-
-### Embedding
-A vector (list of 384 numbers) representing text meaning
-- Generated by neural network (SentenceTransformer)
-- Similar texts → Similar embeddings
-- Used for semantic similarity search
-
-### Cosine Similarity
-A metric measuring angle between vectors (0.0 to 1.0)
-- 1.0 = identical meaning
-- 0.0 = completely different
-
-## ✅ Project Tasks
-
-### Task 01-04: Foundations ✓
-- Load embedding model
-- Understand embeddings and vectors
-- Implement cosine similarity
-- Build basic search
-
-### Task 05: Document Ingestion ✓
-- Load .txt files
-- Split into chunks (300 chars + 50 char overlap)
-- Generate embeddings
-- Build index
-- **Result:** 57 chunks from 3 documents, ready to search
-
-### Task 06: FastAPI Service ✓
-- HTTP API with FastAPI
-- Endpoints: POST /search, GET /health, GET /stats
-- Pydantic validation
-- CORS for frontend
-- **Result:** RESTful API ready for production
-
-### Task 07+: Frontend
-- [ ] Build Next.js frontend
-- [ ] Display search results
-- [ ] Add document upload
-- [ ] Deploy to cloud
-
-## 🔧 Development
-
-### Running in Development
+Includes comparison framework for evaluating semantic vs keyword search:
 
 ```bash
 cd backend
-uvicorn main:app --reload
+python evaluation/compare.py
 ```
 
-Features:
-- Auto-restart on code changes
-- Hot reload
-- Interactive docs at http://localhost:8000/docs
+Results show:
+- **Precision@K**: % of top-K results that are relevant
+- **Recall@K**: % of all relevant docs found
+- **Winner**: Which approach works better for each query
 
-### Running in Production
+See [TASK_09_EVALUATION.md](TASK_09_EVALUATION.md) for detailed analysis.
 
-```bash
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
-```
+## 📖 What I Learned
 
-### Using Docker
+### Tasks 1-4: Foundations
+- How embeddings represent semantic meaning
+- Vector mathematics (dot product, magnitude, cosine similarity)
+- Why pre-trained models are more efficient than training from scratch
 
-```dockerfile
-FROM python:3.11
-WORKDIR /app
-COPY backend/requirements.txt .
-RUN pip install -r requirements.txt
-COPY backend .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+### Task 5: Document Preparation
+- Why documents must be chunked (token limits)
+- Importance of overlap in chunking (context preservation)
+- Metadata tracking for search result interpretation
 
-```bash
-docker build -t semantic-search .
-docker run -p 8000:8000 semantic-search
-```
+### Task 6: API Design
+- FastAPI for rapid API development
+- Pydantic for data validation
+- Separation of concerns (routes vs services)
+- CORS for frontend-backend communication
 
-## 📖 Documentation Files
+### Task 7: Frontend Development
+- Next.js and App Router patterns
+- React Hooks for state management
+- TypeScript for type safety
+- Tailwind CSS for responsive design
 
-| File | Purpose |
-|------|---------|
-| `TASK_05_GUIDE.md` | Document chunking explained |
-| `TASK_05_INTERVIEW_QA.md` | Q&A format learning |
-| `TASK_06_API_GUIDE.md` | Complete API documentation |
+### Task 8: Vector Databases
+- Local vs cloud-based search trade-offs
+- Why vector databases are necessary at scale
+- Abstraction layers for swappable implementations
 
-## 🐛 Troubleshooting
+### Task 9: Evaluation
+- Precision vs recall trade-off
+- When keyword search outperforms semantic
+- Importance of evaluation metrics
+- Why hybrid search combines strengths
 
-### Port 8000 Already in Use
+## 🔮 Future Improvements
 
-```bash
-lsof -i :8000
-kill -9 <PID>
-# Or use different port: uvicorn main:app --port 8001
-```
+- **Hybrid Search**: Combine semantic + keyword ranking
+- **Reranking**: Secondary ranking to improve precision
+- **Better Chunking**: Sentence/semantic-based instead of fixed-size
+- **PDF Ingestion**: Support PDF documents, not just text
+- **Multilingual Search**: Support multiple languages
+- **Filtering**: Filter results by document, date, category
+- **Authentication**: User accounts and access control
+- **Analytics**: Track popular queries and search patterns
+- **Batch Upload**: Upload multiple documents at once
+- **Query Expansion**: Automatically expand queries with related terms
+- **Caching**: Cache frequent query results
+- **Performance**: GPU acceleration for faster embeddings
 
-### Model Download Fails
+## 🎓 Key Insights
 
-```bash
-python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
-```
+1. **Semantic search is powerful but not universal**
+   - Great for synonyms, paraphrases, related concepts
+   - Weaker at exact technical terms
 
-### Out of Memory
+2. **Keyword search has unexpected strengths**
+   - Better precision on technical queries
+   - Faster with no model overhead
+   - More interpretable (clear why results matched)
 
-Reduce batch size in `services/search_service.py`:
-```python
-embeddings = self.model.encode(chunk_texts, batch_size=32)
-```
+3. **Hybrid approaches are practical**
+   - Semantic for recall, keyword for precision
+   - Combine scores: 70% semantic + 30% keyword
+   - Best performance on diverse queries
 
-## 🚀 Next Steps
+4. **Evaluation matters**
+   - Always measure precision and recall
+   - Different domains have different priorities
+   - Benchmarking reveals non-obvious trade-offs
 
-1. **Test with Swagger UI** → http://localhost:8000/docs
-2. **Read TASK_05_GUIDE.md** → Understand chunking and embeddings
-3. **Build Next.js Frontend** → Create UI for search
-4. **Add Features** → Filtering, caching, ranking
-5. **Scale Up** → Use vector database for millions of docs
+## 🔗 Resources
 
-## 🤖 Integration with Next.js
+- [Sentence Transformers](https://www.sbert.net/) - Embedding models
+- [FastAPI](https://fastapi.tiangolo.com/) - Python web framework
+- [Next.js](https://nextjs.org/) - React framework
+- [Semantic Search Deep Dive](docs/architecture.md) - System design
 
-```typescript
-const searchAPI = async (query: string) => {
-  const response = await fetch("http://localhost:8000/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, top_k: 5 }),
-  });
-  return response.json();
-};
-```
+## 📝 License
 
-## 📊 Project Status
+Educational project. Feel free to use for learning purposes.
 
-- ✅ Task 01-04: Core semantic search
-- ✅ Task 05: Document ingestion & chunking
-- ✅ Task 06: FastAPI service with HTTP API
-- ⏳ Task 07+: Next.js frontend & production features
+## 🤝 Contributing
+
+This is an educational project. Suggestions and improvements welcome!
 
 ---
 
-**Happy Searching!** 🔍
+**Start searching:** `npm run dev` in frontend, `uvicorn main:app --reload` in backend, then visit http://localhost:3000
 
-For detailed documentation, see inline code comments and task guides.
+**Questions?** See [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation help or [docs/](docs/) for deep dives.
